@@ -1,5 +1,6 @@
 package com.example.CWAIAgent.demos.web.app;
 
+import com.example.CWAIAgent.demos.web.advisor.MyCustomAdvisor;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,8 @@ public class CWAiAgentApp {
         chatClient = chatClientBuilder
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(chatMemory)
+                        new MessageChatMemoryAdvisor(chatMemory),
+                        new MyCustomAdvisor()
                 )
                 .build();
     }
