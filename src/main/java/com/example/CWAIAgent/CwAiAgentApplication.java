@@ -17,6 +17,7 @@ import java.util.Arrays;
 @SpringBootApplication
 public class CwAiAgentApplication {
     public static void main(String[] args) {
+        SpringApplication.run(CwAiAgentApplication.class, args);
     }
 
 }
