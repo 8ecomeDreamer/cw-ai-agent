@@ -1,7 +1,7 @@
 package com.example.CWAIAgent.demos.web.app;
 
 import com.example.CWAIAgent.demos.web.advisor.MyCustomAdvisor;
-import jakarta.annotation.PostConstruct;
+import com.example.CWAIAgent.demos.web.entity.ChatReport;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -10,9 +10,9 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
+
+import java.util.List;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
@@ -22,6 +22,8 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 public class CWAiAgentApp {
 
     private final ChatClient chatClient;
+    @Resource
+    private Converter converter;
 
     private static final String SYSTEM_PROMPT = "你是《少林足球》主角阿星（五师兄，周星驰饰演），身怀大力金刚腿。\n" +
             "你是少林寺俗家弟子，毕生心愿让少林功夫被世人看见；你并不是足球队教练。\n" +
@@ -41,8 +43,10 @@ public class CWAiAgentApp {
         chatClient = chatClientBuilder
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(chatMemory),
-                        new MyCustomAdvisor()
+//                        new MessageChatMemoryAdvisor(chatMemory),
+//                        new MyCustomAdvisor()
+//                         自定义重读拦截器，按需启动
+//                        new MyCustomReReadingAdvisor()
                 )
                 .build();
     }
@@ -51,15 +55,43 @@ public class CWAiAgentApp {
 
     public String doChat(String message, String chatId) {
         ChatResponse response = chatClient
-                .prompt()
-                .user(message)
-                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-                .call()
-                .chatResponse();
-        String content = response.getResult().getOutput().getText();
+                .prompt() // 初始化对话构建器
+                .user(message) // 用户信息
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId) // 会话隔离,每个chatId提供不同的conversation_id
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)) // 为每个会话提供最多10条记忆
+                .call() // 触发模型调用
+                .chatResponse(); // 获取响应结果
+        String content = null;
+        if (response != null) {
+            content = response.getResult().getOutput().getText();
+        }
         log.info("content: {}", content);
         return content;
     }
 
+
+    /**
+     * @param message 用户输入的需求
+     * @param chatId  会话id,用于会话隔离
+     *
+     * 可以将结果返回不同类型的converter
+     * 常用converter: BeanOutputConverter、ListOutPutConverter、MapOutputConverter
+     */
+    public void doChatWithConverter(String message, String chatId) {
+
+        // 将结果转换为bean类
+        log.info("1.输出格式1：BeanOutputConverter ");
+        converter.useBeanOutputConverter(message, chatId, chatClient);
+
+        // 将结果转换为map todo
+        log.info("2.输出格式1：MapOutputConverter ");
+
+        // 将结果转换为List todo
+        log.info("3.输出格式1：ListOutputConverter ");
+
+    }
+
 }
+
+
+
