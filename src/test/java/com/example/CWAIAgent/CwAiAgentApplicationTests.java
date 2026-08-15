@@ -45,4 +45,27 @@ class CwAiAgentApplicationTests {
         dWAiAgentApp.doChatWithConverter(message, chatId);
 
     }
+
+
+    @Test
+    void doChatWithMemory() {
+
+        String chatId = UUID.randomUUID().toString();
+        String message = "记忆存储？";
+
+        // 测试
+        dWAiAgentApp.doChat(message, chatId);
+
+    }
+
+    @Test
+    void doChatWithRag() {
+
+        String chatId = UUID.randomUUID().toString();
+        String message = "啊梅是谁？";
+
+        // 测试
+        dWAiAgentApp.doChatWithRag(message, chatId);
+//        dWAiAgentApp.doChat(message, chatId);
+    }
 }

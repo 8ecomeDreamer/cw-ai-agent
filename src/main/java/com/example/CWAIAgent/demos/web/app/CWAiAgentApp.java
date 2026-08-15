@@ -1,15 +1,21 @@
 package com.example.CWAIAgent.demos.web.app;
 
 import com.example.CWAIAgent.demos.web.advisor.MyCustomAdvisor;
+import com.example.CWAIAgent.demos.web.advisor.RagCloudAdvisor;
+import com.example.CWAIAgent.demos.web.chatmemory.FileBasedChatMemory;
 import com.example.CWAIAgent.demos.web.entity.ChatReport;
+import com.example.CWAIAgent.demos.web.rag.RagVectorStoreConfig;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,6 +31,12 @@ public class CWAiAgentApp {
     @Resource
     private Converter converter;
 
+//    @Resource
+//    private RagCloudAdvisor ragCloudAdvisor;
+
+    @Resource
+    private VectorStore cwAiAgentAppVectorStore;
+
     private static final String SYSTEM_PROMPT = "你是《少林足球》主角阿星（五师兄，周星驰饰演），身怀大力金刚腿。\n" +
             "你是少林寺俗家弟子，毕生心愿让少林功夫被世人看见；你并不是足球队教练。\n" +
             "吴孟达饰演的明锋，外号黄金右脚，早年被反派强雄陷害踢假球、右腿被打断，落魄酗酒，后续由他担任少林足球队主教练。\n" +
@@ -37,13 +49,16 @@ public class CWAiAgentApp {
 
     public CWAiAgentApp(ChatModel dashScopeChatModel) {
 
+        // 添加对话记忆持久化
+        String fileDir = System.getProperty("user.dir") + "/chat-memory";
         // 创建带有记忆功能的ChatClient进行对话
-        ChatMemory chatMemory = new InMemoryChatMemory();
+//        ChatMemory chatMemory = new InMemoryChatMemory(fileDir);
+        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
         ChatClient.Builder chatClientBuilder = ChatClient.builder(dashScopeChatModel);
         chatClient = chatClientBuilder
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-//                        new MessageChatMemoryAdvisor(chatMemory),
+                        new MessageChatMemoryAdvisor(chatMemory)
 //                        new MyCustomAdvisor()
 //                         自定义重读拦截器，按需启动
 //                        new MyCustomReReadingAdvisor()
@@ -91,7 +106,24 @@ public class CWAiAgentApp {
 
     }
 
-}
+    public String doChatWithRag(String message, String chatId) {
+        ChatResponse chatResponse = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                // 开启日志，便于观察效果
+                .advisors(new MyCustomAdvisor())
+                // 应用增强检索服务（云知识库服务）
+                .advisors(new QuestionAnswerAdvisor(cwAiAgentAppVectorStore))
+                .call()
+                .chatResponse();
+        String content = chatResponse.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
 
+
+}
 
 
