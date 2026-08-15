@@ -16,7 +16,7 @@ import java.util.UUID;
 class CwAiAgentApplicationTests {
 
     @Resource
-    private CWAiAgentApp dWAiAgentApp;
+    private CWAiAgentApp cwAiAgentApp;
 
     @Test
     void contextLoads() {
@@ -29,7 +29,7 @@ class CwAiAgentApplicationTests {
         String message = "你好，你是谁？";
 
         // 测试
-        String answer = dWAiAgentApp.doChat(message, chatId);
+        String answer = cwAiAgentApp.doChat(message, chatId);
         System.out.println(answer);
         Assertions.assertNotNull(answer);
 
@@ -42,7 +42,7 @@ class CwAiAgentApplicationTests {
         String message = "你好，你是谁？";
 
         // 测试
-        dWAiAgentApp.doChatWithConverter(message, chatId);
+        cwAiAgentApp.doChatWithConverter(message, chatId);
 
     }
 
@@ -54,7 +54,7 @@ class CwAiAgentApplicationTests {
         String message = "记忆存储？";
 
         // 测试
-        dWAiAgentApp.doChat(message, chatId);
+        cwAiAgentApp.doChat(message, chatId);
 
     }
 
@@ -65,7 +65,25 @@ class CwAiAgentApplicationTests {
         String message = "啊梅是谁？";
 
         // 测试
-        dWAiAgentApp.doChatWithRag(message, chatId);
+        cwAiAgentApp.doChatWithRag(message, chatId);
 //        dWAiAgentApp.doChat(message, chatId);
     }
+
+    @Test
+    void doChatWithConverter() {
+    }
+
+    @Test
+    void doChatWithTools() {
+        // 将联网搜索和生成图片和生成pdf功能结合在一起
+        testMessage("帮我搜索一下周星驰喜剧之王的文案，再配一张它的照片，生成在pdf中。");
+    }
+
+
+    private void testMessage(String message) {
+        String chatId = UUID.randomUUID().toString();
+        String answer = cwAiAgentApp.doChatWithTools(message, chatId);
+        Assertions.assertNotNull(answer);
+    }
+
 }
