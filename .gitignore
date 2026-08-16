@@ -34,3 +34,7 @@ build/
 
 ### private ###
 application-local.yml
+
+### 高德 ###
+mcp-servers.json
+mcp-servers-windows.json

@@ -81,9 +81,22 @@ class CwAiAgentApplicationTests {
 
 
     private void testMessage(String message) {
+        // 生成一个随机的聊天ID
         String chatId = UUID.randomUUID().toString();
+        // 使用AI代理处理输入的消息，并获取回答
         String answer = cwAiAgentApp.doChatWithTools(message, chatId);
+        // 断言回答不为空，确保AI返回了有效响应
         Assertions.assertNotNull(answer);
     }
 
+    @Test
+    void doChatWithMcp() {
+        String chatId = UUID.randomUUID().toString();
+        // 测试地图 MCP
+        String message = "我的另一半居住在上海静安区，请帮我找到 5 公里内合适的约会地点";
+        String answer = cwAiAgentApp.doChatWithMcp(message, chatId);
+        System.out.println(answer);
+    }
 }
+
+

@@ -1,25 +1,19 @@
 package com.example.CWAIAgent.demos.web.app;
 
 import com.example.CWAIAgent.demos.web.advisor.MyCustomAdvisor;
-import com.example.CWAIAgent.demos.web.advisor.RagCloudAdvisor;
 import com.example.CWAIAgent.demos.web.chatmemory.FileBasedChatMemory;
-import com.example.CWAIAgent.demos.web.entity.ChatReport;
-import com.example.CWAIAgent.demos.web.rag.RagVectorStoreConfig;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
@@ -40,6 +34,8 @@ public class CWAiAgentApp {
 
     @Resource
     private ToolCallback[] allTools;
+    @Resource
+    private ToolCallbackProvider toolCallbackProvider;
 
     private static final String SYSTEM_PROMPT = "你是《少林足球》主角阿星（五师兄，周星驰饰演），身怀大力金刚腿。\n" +
             "你是少林寺俗家弟子，毕生心愿让少林功夫被世人看见；你并不是足球队教练。\n" +
@@ -137,6 +133,23 @@ public class CWAiAgentApp {
                 // 开启日志，便于观察效果
                 .advisors(new MyCustomAdvisor())
                 .tools(allTools)
+                .call()
+                .chatResponse();
+        String content = response.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
+
+
+    public String doChatWithMcp(String message, String chatId) {
+        ChatResponse response = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                // 开启日志，便于观察效果
+                .advisors(new MyCustomAdvisor())
+                .tools(toolCallbackProvider)
                 .call()
                 .chatResponse();
         String content = response.getResult().getOutput().getText();
