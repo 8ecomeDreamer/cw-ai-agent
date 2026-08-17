@@ -93,7 +93,7 @@ class CwAiAgentApplicationTests {
     void doChatWithMcp() {
         String chatId = UUID.randomUUID().toString();
         // 测试地图 MCP
-        String message = "我的另一半居住在上海静安区，请帮我找到 5 公里内合适的约会地点";
+        String message = "请帮我找到周星驰的家";
         String answer = cwAiAgentApp.doChatWithMcp(message, chatId);
         System.out.println(answer);
     }
